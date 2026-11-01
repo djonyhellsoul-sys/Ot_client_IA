@@ -117,14 +117,12 @@ public:
     void removeTextureFromAtlas(uint32_t id, bool smooth);
     std::string getAtlasStats() const;
 
-    void setScreenShader(const PainterShaderProgramPtr& shader) { m_screenShader = shader; }
-
 private:
     DrawPool* getCurrentPool() const;
 
     void draw();
     void init(uint16_t spriteSize);
-    void terminate();
+    void terminate() const;
     void drawObject(DrawPool* pool, const DrawPool::DrawObject& obj);
     void drawPool(DrawPoolType type);
     void drawObjects(DrawPool* pool);
@@ -138,9 +136,6 @@ private:
 
     Size m_size;
     Matrix3 m_transformMatrix;
-
-    FrameBufferPtr m_screenFramebuffer;
-    PainterShaderProgramPtr m_screenShader;
 
     uint16_t m_spriteSize{ 32 };
 

@@ -280,18 +280,6 @@ function inventoryController:onInit()
     connect(pvpModeRadioGroup, {
         onSelectionChange = onSetPVPMode
     })
-
-    -- Register player events at module init (connected at startup, before any
-    -- login). If registered in onGameStart (deferred via addEvent), the login
-    -- packet burst can win the race against the connection: LuaObject::callLuaField
-    -- negative-caches "no handler" per object/field and never calls Lua again for
-    -- that event, leaving the inventory frozen for the whole session (stale slot
-    -- widgets + "Sorry, not possible" when dragging them).
-    inventoryController:registerEvents(LocalPlayer, {
-        onInventoryChange = inventoryEvent,
-        onSoulChange = onSoulChange,
-        onFreeCapacityChange = onFreeCapacityChange
-    })
 end
 
 function inventoryController:onGameStart()
@@ -310,7 +298,12 @@ function inventoryController:onGameStart()
             end
         end
     end
-    -- LocalPlayer events are registered in onInit (see note there).
+    inventoryController:registerEvents(LocalPlayer, {
+        onInventoryChange = inventoryEvent,
+        onSoulChange = onSoulChange,
+        onFreeCapacityChange = onFreeCapacityChange
+    }):execute()
+
     inventoryController:registerEvents(g_game, {
         onWalk = walkEvent,
         onAutoWalk = walkEvent,

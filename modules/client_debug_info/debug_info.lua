@@ -90,13 +90,10 @@ function terminate()
 
 	removeEvent(updateEvent)
 	removeEvent(monitorEvent)
-
-	g_stats.pause()
 end
 
 function onClose()
 	debugInfoButton:setOn(false)
-	g_stats.pause()
 end
 
 function onMiniWindowClose()
@@ -107,9 +104,7 @@ function toggle()
 	if debugInfoButton:isOn() then
 		debugInfoWindow:hide()
 		debugInfoButton:setOn(false)
-		g_stats.pause()
 	else
-		g_stats.resume()
 		debugInfoWindow:show()
 		debugInfoWindow:raise()
 		debugInfoWindow:focus()

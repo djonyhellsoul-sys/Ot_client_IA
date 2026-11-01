@@ -11,23 +11,6 @@ local normalizeTierPriceEntries = Helpers.normalizeTierPriceEntries
 -- Store all callback references to prevent garbage collection
 ForgeController.callbacks = {}
 
--- scheduleEvent holds callbacks weakly; cancel every pending event before callbacks is dropped
-ForgeController.events = {}
-
-local function scheduleForgeEvent(name, callback, delay)
-    removeEvent(ForgeController.events[name])
-    local event = scheduleEvent(callback, delay)
-    ForgeController.events[name] = event
-    return event
-end
-
-local function removeForgeEvents()
-    for name, event in pairs(ForgeController.events) do
-        removeEvent(event)
-        ForgeController.events[name] = nil
-    end
-end
-
 ForgeController.showResult = false
 ForgeController.showBonus = false
 
@@ -67,7 +50,7 @@ function ForgeController:onGameStart()
         self.callbacks.unloadModule = function()
             g_modules.getModule("game_forge"):unload()
         end
-        scheduleForgeEvent('unloadModule', self.callbacks.unloadModule, 100)
+        scheduleEvent(self.callbacks.unloadModule, 100)
     end
 end
 
@@ -209,9 +192,11 @@ end
 
 function ForgeController:terminate()
     -- Clean up any pending events
-    removeForgeEvents()
-    ForgeController.resultTimeout = nil
-
+    if ForgeController.resultTimeout then
+        removeEvent(ForgeController.resultTimeout)
+        ForgeController.resultTimeout = nil
+    end
+    
     -- Clean up all stored callbacks
     if ForgeController.callbacks then
         for key, _ in pairs(ForgeController.callbacks) do
@@ -312,7 +297,7 @@ ForgeController.callbacks.showBonusCallback = function()
     ForgeController.showBonus = true
 
     -- Use the stored callback
-    scheduleForgeEvent('updateBonusButton', ForgeController.callbacks.updateBonusButton, 150)
+    scheduleEvent(ForgeController.callbacks.updateBonusButton, 150)
 end
 
 function ForgeController:closeResult()
@@ -363,8 +348,7 @@ function ForgeController:forgeAction(isTransfer)
         end
     end
     
-    ForgeController.resultTimeout = scheduleForgeEvent('timeoutCallback', ForgeController.callbacks.timeoutCallback,
-        5000)
+    ForgeController.resultTimeout = scheduleEvent(ForgeController.callbacks.timeoutCallback, 5000)
 
     g_game.forgeRequest(actionType, data.isConvergence, data.selected.id, data.selected.tier,
         data.selectedTarget.id, chanceImproved, reduceTierLoss)
@@ -440,7 +424,7 @@ function ForgeController:resultSystemEvent()
                 ForgeController.result.rightItemId = -1
                 ForgeController.result.rightTier = 0
             end
-            scheduleForgeEvent('clearRightItem', ForgeController.callbacks.clearRightItem, 1000)
+            scheduleEvent(ForgeController.callbacks.clearRightItem, 1000)
         end
         return
     end
@@ -450,7 +434,7 @@ function ForgeController:resultSystemEvent()
     ForgeController.callbacks.continueAnimation = function()
         ForgeController:resultSystemEvent()
     end
-    scheduleForgeEvent('continueAnimation', ForgeController.callbacks.continueAnimation, 750)
+    scheduleEvent(ForgeController.callbacks.continueAnimation, 750)
 end
 
 function forgeResultData(rawData)
@@ -551,7 +535,7 @@ function forgeResultData(rawData)
     ForgeController.callbacks.startResultAnimation = function()
         ForgeController:resultSystemEvent()
     end
-    scheduleForgeEvent('startResultAnimation', ForgeController.callbacks.startResultAnimation, 750)
+    scheduleEvent(ForgeController.callbacks.startResultAnimation, 750)
 end
 
 local buttonClip = { x = 0, y = 0, width = 43, height = 20 }

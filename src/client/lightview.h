@@ -25,7 +25,6 @@
 #include "framework/graphics/coordsbuffer.h"
 #include "framework/luaengine/luaobject.h"
 #include "staticdata.h"
-#include <atomic>
 #include <framework/graphics/declarations.h>
 
 class LightView final : public LuaObject
@@ -85,5 +84,4 @@ private:
     TexturePtr m_texture;
     LightData m_lightData;
     std::array<std::vector<uint8_t>, 2> m_pixels;
-    std::atomic_bool m_updatePixel{ false };
 };

@@ -41,9 +41,6 @@
 #include "framework/net/inputmessage.h"
 #include "paperdollmanager.h"
 #include "paperdoll.h"
-#ifdef FRAMEWORK_SOUND
-#include <framework/sound/soundmanager.h>
-#endif
 #include <fmt/format.h>
 #include <framework/util/stats.h>
 
@@ -1962,21 +1959,15 @@ void ProtocolGame::parseMagicEffect(const InputMessagePtr& msg)
                 }
 
                 case Otc::MAGIC_EFFECTS_CREATE_SOUND_MAIN_EFFECT: {
-                    const uint8_t soundSource = msg->getU8(); // Source
-                    const uint16_t soundId = msg->getU16(); // Sound ID
-                    #ifdef FRAMEWORK_SOUND
-                    g_sounds.playProtocolSoundMain(soundSource, soundId, pos);
-                    #endif
+                    msg->getU8(); // Source
+                    msg->getU16(); // Sound ID
                     break;
                 }
 
                 case Otc::MAGIC_EFFECTS_CREATE_SOUND_SECONDARY_EFFECT: {
-                    const uint8_t soundEnum = msg->getU8(); // ENUM
-                    const uint8_t soundSource = msg->getU8(); // Source
-                    const uint16_t soundId = msg->getU16(); // Sound ID
-                    #ifdef FRAMEWORK_SOUND
-                    g_sounds.playProtocolSoundSecondary(soundEnum, soundSource, soundId, pos);
-                    #endif
+                    msg->getU8(); // ENUM
+                    msg->getU8(); // Source
+                    msg->getU16(); // Sound ID
                     break;
                 }
                 default:
@@ -6278,7 +6269,6 @@ void ProtocolGame::parseOpenRewardWall(const InputMessagePtr& msg)
     uint16_t tokens = 0;
     std::string errorMessage = "";
     uint32_t timeLeft = 0;
-    uint8_t canGetReward = 0;
 
     if (wasDailyRewardTaken != 0) {// taken (player already took reward?)
         errorMessage = msg->getString(); // error message
@@ -6287,7 +6277,7 @@ void ProtocolGame::parseOpenRewardWall(const InputMessagePtr& msg)
             tokens = msg->getU16(); // Tokens
         }
     } else {
-        canGetReward = msg->getU8(); // 2 = reward can be collected
+        msg->getU8(); // Unknown
         timeLeft = msg->getU32(); // time left to pickup reward without loosing streak
         tokens = msg->getU16(); // Tokens
     }
@@ -6295,7 +6285,7 @@ void ProtocolGame::parseOpenRewardWall(const InputMessagePtr& msg)
     const uint16_t dayStreakLevel = msg->getU16(); // day streak level
 
     g_lua.callGlobalField("g_game", "onOpenRewardWall", bonusShrine, nextRewardTime, dayStreakDay,
-                          wasDailyRewardTaken, errorMessage, tokens, timeLeft, dayStreakLevel, canGetReward);
+                          wasDailyRewardTaken, errorMessage, tokens, timeLeft, dayStreakLevel);
 }
 
 namespace {

@@ -30,7 +30,6 @@
 #include "framework/otml/otmldocument.h"
 #include "framework/otml/otmlexception.h"
 #include "framework/otml/otmlnode.h"
-#include "framework/otml/otmlparser.h"
 #include <framework/platform/platformwindow.h>
 #include <framework/util/stats.h>
 
@@ -57,7 +56,6 @@ void UIManager::terminate()
     m_hoveredWidget = nullptr;
     m_pressedWidget = nullptr;
     m_styles.clear();
-    m_globalAliases.clear();
     m_destroyedWidgets.clear();
     m_checkEvent = nullptr;
     m_hoveredWidgets.clear();
@@ -429,20 +427,13 @@ void UIManager::onWidgetDestroy(const UIWidgetPtr& widget)
 void UIManager::clearStyles()
 {
     m_styles.clear();
-    m_globalAliases.clear();
-}
-
-void UIManager::registerGlobalAliases(const OTMLDocumentPtr& doc)
-{
-    for (const auto& [name, value] : doc->globalAliases())
-        m_globalAliases[name] = value;
 }
 
 bool UIManager::importStyle(const std::string& fl, const bool checkDeviceStyles)
 {
     const std::string file{ g_resources.guessFilePath(fl, "otui") };
     try {
-        const auto& doc = OTMLDocument::parse(file, m_globalAliases);
+        const auto& doc = OTMLDocument::parse(file);
 
         for (const auto& styleNode : doc->children()) {
             const std::string tag = styleNode->tag();
@@ -452,7 +443,6 @@ bool UIManager::importStyle(const std::string& fl, const bool checkDeviceStyles)
                 continue;
             importStyleFromOTML(styleNode);
         }
-        registerGlobalAliases(doc);
     } catch (stdext::exception& e) {
         g_logger.error("Failed to import UI styles from '{}': {}", file, e.what());
         return false;
@@ -460,32 +450,18 @@ bool UIManager::importStyle(const std::string& fl, const bool checkDeviceStyles)
 
     if (checkDeviceStyles) {
         // check for device styles
+        const auto fileName = fl.substr(0, fl.find("."));
+
         const auto deviceName = g_platform.getDeviceShortName();
         if (!deviceName.empty())
-            importStyle(getDeviceStyleName(fl, deviceName), false);
+            importStyle(deviceName + "." + fileName, false);
 
         const auto osName = g_platform.getOsShortName();
         if (!osName.empty())
-            importStyle(getDeviceStyleName(fl, osName), false);
+            importStyle(osName + "." + fileName, false);
     }
 
     return true;
-}
-
-std::string UIManager::getDeviceStyleName(const std::string_view stylePath, const std::string_view deviceName)
-{
-    // Device styles live next to the base style, so the directory part of the
-    // path must survive the rename: '/modules/example/foo' becomes
-    // '/modules/example/windows.foo', not 'windows./modules/example/foo'.
-    const auto slashPos = stylePath.rfind('/');
-    const auto dir = slashPos == std::string_view::npos ? std::string_view{} : stylePath.substr(0, slashPos + 1);
-    auto base = slashPos == std::string_view::npos ? stylePath : stylePath.substr(slashPos + 1);
-    base = base.substr(0, base.rfind('.'));
-
-    std::string result;
-    result.reserve(dir.size() + deviceName.size() + 1 + base.size());
-    result.append(dir).append(deviceName).append(".").append(base);
-    return result;
 }
 
 void UIManager::importStyleFromOTML(const OTMLNodePtr& styleNode)
@@ -546,12 +522,6 @@ void UIManager::importStyleFromOTML(const OTMLDocumentPtr& doc)
         if (tag.find('<') != std::string::npos)
             importStyleFromOTML(node);
     }
-    registerGlobalAliases(doc);
-}
-
-void UIManager::resolveStyleAliases(const OTMLNodePtr& styleNode) const
-{
-    OTMLParser::resolveVariables(styleNode, m_globalAliases);
 }
 
 OTMLNodePtr UIManager::getStyle(const std::string_view sn)
@@ -611,31 +581,14 @@ OTMLNodePtr UIManager::findMainWidgetNode(const OTMLDocumentPtr& doc)
     return mainNode;
 }
 
-std::string UIManager::getDeviceUIName(const std::string_view file, const std::string_view deviceName)
-{
-    // The device/OS suffix goes after the complete base name: only a final
-    // extension is dropped, and a dot elsewhere in the path is part of the
-    // name — '/modules/foo.v2/window' becomes '/modules/foo.v2/window.windows',
-    // never '/modules/foo.windows'.
-    const auto slashPos = file.rfind('/');
-    const auto dotPos = file.rfind('.');
-    const auto rawName = dotPos != std::string_view::npos && (slashPos == std::string_view::npos || dotPos > slashPos)
-        ? file.substr(0, dotPos)
-        : file;
-
-    std::string result;
-    result.reserve(rawName.size() + 1 + deviceName.size());
-    result.append(rawName).append(".").append(deviceName);
-    return result;
-}
-
 OTMLNodePtr UIManager::loadDeviceUI(const std::string& file, const OperatingSystem os)
 {
+    const auto rawName = file.substr(0, file.find("."));
     const auto osName = g_platform.getOsShortName(os);
 
-    const auto& doc = OTMLDocument::parse(g_resources.guessFilePath(getDeviceUIName(file, osName), "otui"), m_globalAliases);
+    const auto& doc = OTMLDocument::parse(g_resources.guessFilePath(rawName + "." + osName, "otui"));
     if (doc) {
-        g_logger.info("Found os style '{}' for '{}'", osName, file);
+        g_logger.info("Found os style '{}' for '{}'", osName, rawName);
         importStyleFromOTML(doc);
         return findMainWidgetNode(doc);
     }
@@ -644,11 +597,12 @@ OTMLNodePtr UIManager::loadDeviceUI(const std::string& file, const OperatingSyst
 
 OTMLNodePtr UIManager::loadDeviceUI(const std::string& file, const DeviceType deviceType)
 {
+    const auto rawName = file.substr(0, file.find("."));
     const auto deviceName = g_platform.getDeviceShortName(deviceType);
 
-    const auto& doc = OTMLDocument::parse(g_resources.guessFilePath(getDeviceUIName(file, deviceName), "otui"), m_globalAliases);
+    const auto& doc = OTMLDocument::parse(g_resources.guessFilePath(rawName + "." + deviceName, "otui"));
     if (doc) {
-        g_logger.info("Found device style '{}' for '{}'", deviceName, file);
+        g_logger.info("Found device style '{}' for '{}'", deviceName, rawName);
         importStyleFromOTML(doc);
         return findMainWidgetNode(doc);
     }
@@ -659,7 +613,7 @@ UIWidgetPtr UIManager::loadUI(const std::string& file, const UIWidgetPtr& parent
 {
     try {
         OTMLNodePtr widgetNode = nullptr;
-        const auto& doc = OTMLDocument::parse(g_resources.guessFilePath(file, "otui"), m_globalAliases);
+        const auto& doc = OTMLDocument::parse(g_resources.guessFilePath(file, "otui"));
 
         for (const auto& node : doc->children()) {
             std::string tag = node->tag();
@@ -676,7 +630,6 @@ UIWidgetPtr UIManager::loadUI(const std::string& file, const UIWidgetPtr& parent
                 widgetNode = node;
             }
         }
-        registerGlobalAliases(doc);
 
         // load device styles and widget
         const auto device = g_platform.getDevice();
@@ -714,8 +667,8 @@ UIWidgetPtr UIManager::loadUIFromString(const std::string& data, const UIWidgetP
         sstream.clear(std::ios::goodbit);
         sstream.write(&data[0], data.length());
         sstream.seekg(0, std::ios::beg);
-        const OTMLDocumentPtr doc = OTMLDocument::parse(sstream, "(string)", m_globalAliases);
-        OTMLNodePtr widgetNode;
+        const OTMLDocumentPtr doc = OTMLDocument::parse(sstream, "(string)");
+        UIWidgetPtr widget;
         for (const OTMLNodePtr& node : doc->children()) {
             std::string tag = node->tag();
 
@@ -726,15 +679,12 @@ UIWidgetPtr UIManager::loadUIFromString(const std::string& data, const UIWidgetP
             if (tag.find('<') != std::string::npos)
                 importStyleFromOTML(node);
             else {
-                if (widgetNode)
+                if (widget)
                     throw Exception("cannot have multiple main widgets in otui files");
-                widgetNode = node;
+                widget = createWidgetFromOTML(node, parent);
             }
         }
-        registerGlobalAliases(doc);
-        UIWidgetPtr widget;
-        if (widgetNode)
-            widget = createWidgetFromOTML(widgetNode, parent);
+
         return widget;
     } catch (stdext::exception& e) {
         g_logger.error("Failed to load UI from string: {}", e.what());

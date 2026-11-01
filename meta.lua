@@ -4301,9 +4301,6 @@ function g_shaders.setupMountShader(name) end
 function g_shaders.addMultiTexture(name, file) end
 
 ---@param name string
-function g_shaders.setScreenShader(name) end
-
----@param name string
 ---@return PainterShaderProgram | nil
 function g_shaders.getShader(name) end
 
@@ -4914,12 +4911,6 @@ function UIWidget:setOpacity(opacity) end
 
 ---@param degress number
 function UIWidget:setRotation(degress) end
-
----@param overflow "visible" | "hidden" | "scroll" | "auto" | "clip"
-function UIWidget:setOverflow(overflow) end
-
----@return integer
-function UIWidget:getOverflow() end
 
 ---@return integer
 function UIWidget:getX() end

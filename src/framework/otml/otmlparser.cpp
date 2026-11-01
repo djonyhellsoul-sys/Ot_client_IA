@@ -236,10 +236,10 @@ namespace {
     }
 } // namespace
 
-OTMLParser::OTMLParser(const OTMLDocumentPtr& doc, std::istream& in, const AliasMap& aliases) :
+OTMLParser::OTMLParser(const OTMLDocumentPtr& doc, std::istream& in) :
     currentDepth(0), currentLine(0),
     doc(doc), currentParent(doc), previousNode(nullptr),
-    in(in), aliases(aliases)
+    in(in)
 {
 }
 
@@ -251,12 +251,7 @@ void OTMLParser::parse()
     while (!in.eof())
         parseLine(getNextLine());
 
-    resolveVariablesRecursive(doc->asOTMLNode(), aliases, doc.get());
-}
-
-void OTMLParser::resolveVariables(const OTMLNodePtr& node, const AliasMap& aliases)
-{
-    resolveVariablesRecursive(node, aliases, nullptr);
+    resolveVariablesRecursive(doc->asOTMLNode(), {}, doc.get());
 }
 
 std::string OTMLParser::getNextLine()

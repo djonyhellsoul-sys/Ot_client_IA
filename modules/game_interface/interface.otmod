@@ -43,7 +43,6 @@ Module
     - game_paperdolls
     - game_stash
     - game_healthcircle
-    - game_soundDebug
     - game_shop
     - game_notifications
     - game_highscore
@@ -53,7 +52,6 @@ Module
     - game_cyclopedia
     - game_creatureinformation
     - game_rewardwall
-    - game_compendium
     - game_forge
     - game_tutorial
     - game_inspect

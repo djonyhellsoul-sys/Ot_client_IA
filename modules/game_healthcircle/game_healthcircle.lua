@@ -752,12 +752,8 @@ function addToOptionsModule()
 
     statsBarMenuLoaded = true
 
-    -- fall back to the same defaults as the stats bar itself, otherwise an
-    -- empty/unknown setting would silently select the first option ('hide')
-    local storedDimension = g_settings.getString('statsbar_dimension')
-    local storedPlacement = g_settings.getString('statsbar_placement')
-    chooseStatsBarDimension:setCurrentOptionByData(storedDimension ~= "" and storedDimension or 'compact', true)
-    chooseStatsBarPlacement:setCurrentOptionByData(storedPlacement ~= "" and storedPlacement or 'top', true)
+    chooseStatsBarDimension:setCurrentOptionByData(g_settings.getString('statsbar_dimension'), true)
+    chooseStatsBarPlacement:setCurrentOptionByData(g_settings.getString('statsbar_placement'), true)
 
     -- Set values
     healthCheckBox:setChecked(isHealthCircle)
@@ -776,19 +772,10 @@ function addToOptionsModule()
 end
 
 function updateStatsBar()
-    if not statsBarMenuLoaded then
-        return
+    if statsBarMenuLoaded then
+        modules.game_interface.updateStatsBar(chooseStatsBarDimension:getCurrentOption().data,
+            chooseStatsBarPlacement:getCurrentOption().data)
     end
-
-    local dimensionOption = chooseStatsBarDimension:getCurrentOption()
-    local placementOption = chooseStatsBarPlacement:getCurrentOption()
-    -- a selection can be empty while the stored stats bar state is still unknown,
-    -- there is nothing to apply in that case
-    if not dimensionOption or not placementOption then
-        return
-    end
-
-    modules.game_interface.updateStatsBar(dimensionOption.data, placementOption.data)
 end
 
 function setPlayerValues()
@@ -800,9 +787,6 @@ function setPlayerValues()
 end
 
 function setStatsBarOption(dimension, placement)
-    if not chooseStatsBarDimension or not chooseStatsBarPlacement then
-        return
-    end
     chooseStatsBarDimension:setCurrentOptionByData(dimension, true)
     chooseStatsBarPlacement:setCurrentOptionByData(placement, true)
 end

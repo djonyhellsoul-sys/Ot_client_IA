@@ -10,10 +10,7 @@ function UIWindow.create()
     return window
 end
 
-function UIWindow:onKeyPress(keyCode, keyboardModifiers, autoRepeatTicks)
-    if autoRepeatTicks > 0 then
-        return false
-    end
+function UIWindow:onKeyPress(keyCode, keyboardModifiers)
     if keyboardModifiers == KeyboardNoModifier then
         if keyCode == KeyEnter then
             signalcall(self.onEnter, self)

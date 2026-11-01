@@ -46,10 +46,8 @@ public:
 
     void clearStyles();
     bool importStyle(const std::string& fl, bool checkDeviceStyles = true);
-    static std::string getDeviceStyleName(std::string_view stylePath, std::string_view deviceName);
     void importStyleFromOTML(const OTMLNodePtr& styleNode);
     void importStyleFromOTML(const OTMLDocumentPtr& doc);
-    void resolveStyleAliases(const OTMLNodePtr& styleNode) const;
     OTMLNodePtr getStyle(std::string_view sn);
     std::string getStyleName(std::string_view styleName);
     std::string getStyleClass(std::string_view styleName);
@@ -57,7 +55,6 @@ public:
 
     UIWidgetPtr loadUI(const std::string& file, const UIWidgetPtr& parent);
     UIWidgetPtr loadUIFromString(const std::string& data, const UIWidgetPtr& parent);
-    static std::string getDeviceUIName(std::string_view file, std::string_view deviceName);
     OTMLNodePtr loadDeviceUI(const std::string& file, OperatingSystem os);
     OTMLNodePtr loadDeviceUI(const std::string& file, DeviceType deviceType);
     UIWidgetPtr displayUI(const std::string& file) { return loadUI(file, m_rootWidget); }
@@ -90,8 +87,6 @@ protected:
     friend class GraphicalApplication;
 
 private:
-    void registerGlobalAliases(const OTMLDocumentPtr& doc);
-
     UIWidgetPtr m_rootWidget;
     UIWidgetPtr m_mouseReceiver;
     UIWidgetPtr m_keyboardReceiver;
@@ -104,7 +99,6 @@ private:
     bool m_drawDebugBoxes{ false };
     bool m_hoverTextUpdateScheduled{ false };
     stdext::map<std::string, OTMLNodePtr> m_styles;
-    std::unordered_map<std::string, std::string> m_globalAliases;
     std::string m_hoveredText;
     UIWidgetList m_destroyedWidgets;
     ScheduledEventPtr m_checkEvent;

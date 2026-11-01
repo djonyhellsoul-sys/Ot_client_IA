@@ -4,7 +4,6 @@ UIButton = extends(UIWidget, 'UIButton')
 function UIButton.create()
     local button = UIButton.internalCreate()
     button:setFocusable(false)
-    button:setClickSound(2774)
     button.cursorPushed = false
     return button
 end

@@ -38,9 +38,6 @@
 #include "framework/graphics/coordsbuffer.h"
 #include <framework/platform/platformwindow.h>
 #include <framework/util/stats.h>
-#ifdef FRAMEWORK_SOUND
-#include <framework/sound/soundmanager.h>
-#endif
 
 UIWidget::UIWidget()
 {
@@ -1228,10 +1225,6 @@ bool UIWidget::setRect(const Rect& rect)
 
                 self->callLuaField("onResize", oldRect, rect);
                 self->onGeometryChange(oldRect, rect);
-            } else if (self->isTextWrap() && self->m_textWrapWidth != rect.width()) {
-                // The size changed and returned within one frame, but the text
-                // was wrapped at the intermediate width; re-wrap at the final one.
-                self->updateText();
             }
         });
         setProp(PropUpdateEventScheduled, true);
@@ -1291,8 +1284,6 @@ void UIWidget::setVisible(const bool visible)
 
     updateState(Fw::ActiveState);
     updateState(Fw::HiddenState);
-    if (visible)
-        playUiSound(UISoundTypeShow);
 
     // visibility can change the current hovered widget
     if (visible)
@@ -1362,34 +1353,6 @@ void UIWidget::setVirtualOffset(const Point& offset)
     m_virtualOffset = offset;
     if (m_layout)
         m_layout->update();
-}
-
-void UIWidget::setClickSound(const int soundId)
-{
-    addSound(UISoundTypeClick, soundId);
-}
-
-void UIWidget::addSound(const int soundType, const int soundId)
-{
-    if (soundType <= UISoundTypeNone)
-        return;
-
-    if (soundId <= 0) {
-        m_uiSounds.erase(soundType);
-        return;
-    }
-
-    m_uiSounds[soundType] = soundId;
-}
-
-void UIWidget::removeSound(const int soundType)
-{
-    if (soundType <= UISoundTypeNone) {
-        m_uiSounds.clear();
-        return;
-    }
-
-    m_uiSounds.erase(soundType);
 }
 
 bool UIWidget::isAnchored()
@@ -1965,7 +1928,7 @@ void UIWidget::onStyleApply(const std::string_view, const OTMLNodePtr& styleNode
 
 void UIWidget::onGeometryChange(const Rect& oldRect, const Rect& newRect)
 {
-    if (isTextWrap() && (oldRect.size() != newRect.size() || m_textWrapWidth != newRect.width()))
+    if (isTextWrap() && oldRect.size() != newRect.size())
         updateText();
 
     // move children that is outside the parent rect to inside again
@@ -2083,7 +2046,6 @@ bool UIWidget::onMouseWheel(const Point& mousePos, const Fw::MouseWheelDirection
 
 bool UIWidget::onClick(const Point& mousePos)
 {
-    playUiSound(UISoundTypeClick);
     if (hasEventListener(EVENT_TEXT_CLICK)) {
         std::string clickedText = getTextByPos(mousePos);
         if (!clickedText.empty()) {
@@ -2262,20 +2224,6 @@ void UIWidget::setShader(const std::string_view name) {
     g_dispatcher.addEvent([this, shader = std::string(name.data())] {
         m_shader = g_shaders.getShader(shader);
     });
-}
-
-void UIWidget::playUiSound(const int soundType)
-{
-    if (soundType <= UISoundTypeNone)
-        return;
-
-    const auto soundIt = m_uiSounds.find(soundType);
-    if (soundIt == m_uiSounds.end() || soundIt->second <= 0)
-        return;
-
-#ifdef FRAMEWORK_SOUND
-    g_sounds.playUiSoundById(soundIt->second);
-#endif
 }
 
 void UIWidget::repaint() { g_drawPool.repaint(DrawPoolType::FOREGROUND); }

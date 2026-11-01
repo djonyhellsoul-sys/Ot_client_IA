@@ -109,7 +109,6 @@ public:
 
     inline void pause() { paused = true; }
     inline void resume() { paused = false; }
-    inline bool isPaused() const { return paused; }
 
 private:
     struct
@@ -128,7 +127,7 @@ private:
     int destroyedThings = 0;
     int createdCreatures = 0;
     int destroyedCreatures = 0;
-    std::atomic_bool paused { true };
+    std::atomic_bool paused { false };
     std::mutex m_mutex;
 };
 
@@ -138,18 +137,9 @@ class AutoStat
 {
 public:
     AutoStat(int type, const std::string& description, const std::string& extraDescription = "") :
-        m_type(type) {
-        if (g_stats.isPaused())
-            return;
-
-        m_stat = new Stat(0, description, extraDescription);
-        m_timePoint = std::chrono::high_resolution_clock::now();
-    }
+        m_type(type), m_stat(new Stat(0, description, extraDescription)), m_timePoint(std::chrono::high_resolution_clock::now()) {}
 
     ~AutoStat() {
-        if (!m_stat)
-            return;
-
         m_stat->executionTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - m_timePoint).count();
         m_stat->executionTime -= m_minusTime;
         g_stats.add(m_type, m_stat);
@@ -160,7 +150,7 @@ public:
 
 private:
     int m_type;
-    Stat* m_stat{ nullptr };
+    Stat* m_stat;
 
 protected:
     uint64_t m_minusTime = 0;

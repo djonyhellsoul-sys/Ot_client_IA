@@ -45,9 +45,6 @@
 #include "framework/graphics/painter.h"
 #include "framework/graphics/shadermanager.h"
 #include "framework/ui/uiwidget.h"
-#ifdef FRAMEWORK_SOUND
-#include <framework/sound/soundmanager.h>
-#endif
 #include <framework/core/graphicalapplication.h>
 #include <framework/util/stats.h>
 
@@ -404,8 +401,8 @@ void Creature::internalDraw(Point dest, const Color& color)
 
         // outfit is a real creature
         if (m_outfit.isCreature()) {
-            if (const auto mountType = getMountThingType(); mountType) {
-                dest -= mountType->getDisplacement() * g_drawPool.getScaleFactor();
+            if (m_outfit.hasMount()) {
+                dest -= getMountThingType()->getDisplacement() * g_drawPool.getScaleFactor();
 
                 if (!replaceColorShader && hasMountShader()) {
                     g_drawPool.setShaderProgram(g_shaders.getShaderById(m_mountShaderId), true/*, [this]()-> void {
@@ -413,7 +410,7 @@ void Creature::internalDraw(Point dest, const Color& color)
                         m_mountShader->setUniformValue(ShaderManager::MOUNT_ID_UNIFORM, m_outfit.getMount());
                     }*/);
                 }
-                mountType->draw(dest, 0, m_numPatternX, 0, 0, getCurrentAnimationPhase(true), color);
+                getMountThingType()->draw(dest, 0, m_numPatternX, 0, 0, getCurrentAnimationPhase(true), color);
 
                 dest += getDisplacement() * g_drawPool.getScaleFactor();
             }
@@ -608,10 +605,6 @@ void Creature::updateJump()
 
 void Creature::onPositionChange(const Position& newPos, const Position& oldPos)
 {
-    #ifdef FRAMEWORK_SOUND
-    if (isLocalPlayer())
-        g_sounds.onListenerPositionChanged(newPos, oldPos);
-    #endif // FRAMEWORK_SOUND
     callLuaFieldUnchecked("onPositionChange", newPos, oldPos);
 }
 
@@ -687,8 +680,7 @@ void Creature::updateWalkAnimation()
     if (!m_outfit.isCreature())
         return;
 
-    const auto mountType = getMountThingType();
-    int footAnimPhases = mountType ? mountType->getAnimationPhases() : getAnimationPhases();
+    int footAnimPhases = m_outfit.hasMount() ? getMountThingType()->getAnimationPhases() : getAnimationPhases();
     if (!g_game.getFeature(Otc::GameEnhancedAnimations) && footAnimPhases > 2) {
         --footAnimPhases;
     }
@@ -1180,8 +1172,8 @@ int Creature::getDisplacementX() const
     if (m_outfit.isItem())
         return 0;
 
-    if (const auto mountType = getMountThingType(); mountType)
-        return mountType->getDisplacementX();
+    if (m_outfit.hasMount())
+        return getMountThingType()->getDisplacementX();
 
     return Thing::getDisplacementX();
 }
@@ -1194,8 +1186,8 @@ int Creature::getDisplacementY() const
     if (m_outfit.isItem())
         return 0;
 
-    if (const auto mountType = getMountThingType(); mountType)
-        return mountType->getDisplacementY();
+    if (m_outfit.hasMount())
+        return getMountThingType()->getDisplacementY();
 
     return Thing::getDisplacementY();
 }

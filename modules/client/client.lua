@@ -4,54 +4,29 @@ if g_sounds then
     musicChannel = g_sounds.getChannel(SoundChannels.Music)
 end
 
-local function onGameStart()
-    if not musicChannel then
-        return
-    end
-
-    musicChannel:stop(3)
-end
-
-local function onGameEnd()
-    if not musicChannel then
-        return
-    end
-
-    g_sounds.stopAll()
-    if modules.client_options and modules.client_options.getOption('soundAnthem') then
-        musicChannel:enqueue(musicFilename, 3)
-    end
-end
-
 function setMusic(filename)
     musicFilename = filename
 
     if not g_game.isOnline() then
         musicChannel:stop()
-        if modules.client_options and modules.client_options.getOption('soundAnthem') then
-            musicChannel:enqueue(musicFilename, 3)
-        end
-    end
-end
-
-function reloadMusic()
-    if not musicChannel then
-        return
-    end
-
-    if not g_game.isOnline() then
-        musicChannel:stop()
-        if modules.client_options and modules.client_options.getOption('soundAnthem') then
-            musicChannel:enqueue(musicFilename, 3)
-        end
+        musicChannel:enqueue(musicFilename, 3)
     end
 end
 
 function startup()
     if musicChannel then
-        if modules.client_options and modules.client_options.getOption('soundAnthem') then
-            musicChannel:enqueue(musicFilename, 3)
-        end
+        musicChannel:enqueue(musicFilename, 3)
+        connect(g_game, {
+            onGameStart = function()
+                musicChannel:stop(3)
+            end
+        })
+        connect(g_game, {
+            onGameEnd = function()
+                g_sounds.stopAll()
+                musicChannel:enqueue(musicFilename, 3)
+            end
+        })
     end
 
     -- Check for startup errors
@@ -74,7 +49,7 @@ function startup()
         EnterGame.firstShow()
     end
     if g_app.hasUpdater() and g_sounds then
-        g_sounds.setAudioEnabled(g_settings.getBoolean('enableAudio', true))
+        g_sounds.setAudioEnabled(g_settings.getBoolean('enableAudio'))
     end
 end
 
@@ -91,10 +66,6 @@ function init()
 
     if musicChannel then
         g_sounds.preload(musicFilename)
-        connect(g_game, {
-            onGameStart = onGameStart,
-            onGameEnd = onGameEnd
-        })
     end
 end
 
@@ -106,13 +77,6 @@ function terminate()
     else
         disconnect(g_app, {
             onRun = startup,
-        })
-    end
-
-    if musicChannel then
-        disconnect(g_game, {
-            onGameStart = onGameStart,
-            onGameEnd = onGameEnd
         })
     end
 end

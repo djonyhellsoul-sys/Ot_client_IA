@@ -31,7 +31,6 @@ StreamSoundSource::StreamSoundSource()
     for (auto& buffer : m_buffers)
         buffer = std::make_shared<SoundBuffer>();
     m_downMix = NoDownMix;
-    m_sourceKind = KindStreaming;
 }
 
 StreamSoundSource::~StreamSoundSource()
@@ -59,8 +58,7 @@ void StreamSoundSource::setSoundFile(const SoundFilePtr& soundFile)
     m_soundFile = soundFile;
     if (m_waitingFile) {
         m_waitingFile = false;
-        if (m_playing)
-            play();
+        play();
     }
 }
 
@@ -92,19 +90,6 @@ void StreamSoundSource::stop()
 
     SoundSource::stop();
     unqueueBuffers();
-}
-
-
-void StreamSoundSource::setLooping(const bool looping)
-{
-    m_streamLooping = looping;
-
-    // Streaming sources loop by refilling and requeueing fragments. OpenAL
-    // source-level looping breaks that lifecycle for queued buffers.
-    alSourcei(m_sourceId, AL_LOOPING, AL_FALSE);
-    assert(alGetError() == AL_NO_ERROR);
-
-    SoundSource::m_looping = looping;
 }
 
 void StreamSoundSource::queueBuffers()
@@ -145,12 +130,12 @@ void StreamSoundSource::update()
     }
 
     if (!isBuffering() && m_playing) {
-        if (!m_streamLooping && m_eof) {
+        if (!m_looping && m_eof) {
             stop();
         } else if (processed == 0) {
             g_logger.traceError("audio buffer underrun");
             play();
-        } else if (m_streamLooping) {
+        } else if (m_looping) {
             play();
         }
     }
@@ -175,7 +160,7 @@ bool StreamSoundSource::fillBufferAndQueue(const uint32_t buffer)
 
         // end of sound file
         if (bytesRead < maxRead) {
-            if (m_streamLooping)
+            if (m_looping)
                 m_soundFile->reset();
             else {
                 m_eof = true;

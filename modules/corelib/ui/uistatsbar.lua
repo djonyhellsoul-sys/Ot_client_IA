@@ -164,9 +164,6 @@ function UIStatsBar:setValue(value, total)
         else
             self.text:setText(value .. '/' .. total)
         end
-        if self.onStatsTextUpdate then
-            self.onStatsTextUpdate(self)
-        end
     else
         self.text:hide()
     end

@@ -44,9 +44,6 @@ public:
     uint32_t getTimeElapsed();
     uint32_t getDuration() { return m_duration; }
 
-    void setPercentReverse(bool percentReverse);
-    bool isPercentReverse() const { return m_percentReverse; }
-
 protected:
     void onStyleApply(std::string_view styleName, const OTMLNodePtr& styleNode) override;
 
@@ -63,5 +60,4 @@ private:
     bool m_showTime{ true };
     bool m_showProgress{ true };
     bool m_running{ false };
-    bool m_percentReverse{ false };
 };

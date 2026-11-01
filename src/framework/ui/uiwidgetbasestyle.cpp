@@ -377,10 +377,6 @@ void UIWidget::parseBaseStyle(const OTMLNodePtr& styleNode)
             setEnabled(node->value<bool>());
         else if (node->tag() == "visible")
             setVisible(node->value<bool>());
-        else if (node->tag() == "click-sound")
-            setClickSound(node->value<int>());
-        else if (node->tag() == "display-sound")
-            addSound(UISoundTypeShow, node->value<int>());
         else if (node->tag() == "visibility")
             setVisible(node->value<std::string>() == "visible");
         else if (node->tag() == "checked")
@@ -596,7 +592,15 @@ void UIWidget::parseBaseStyle(const OTMLNodePtr& styleNode)
         } else if (node->tag() == "align-self") {
             setAlignSelf(parseAlignSelf(node->value<std::string>()));
         } else if (node->tag() == "overflow") {
-            setOverflow(node->value<std::string>());
+            auto v = node->value<std::string>();
+            stdext::tolower(v);
+            OverflowType type = OverflowType::Visible;
+            if (v == "hidden") type = OverflowType::Hidden;
+            else if (v == "scroll") type = OverflowType::Scroll;
+            else if (v == "auto") type = OverflowType::Auto;
+            else if (v == "clip") type = OverflowType::Clip;
+            setOverflow(type);
+            setClipping(type == OverflowType::Clip || type == OverflowType::Scroll || type == OverflowType::Hidden);
         } else if (node->tag() == "position") {
             auto v = node->value<std::string>();
             stdext::tolower(v);

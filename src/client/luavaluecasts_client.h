@@ -24,10 +24,6 @@
 
 #include "staticdata.h"
 
-#ifdef FRAMEWORK_SOUND
-#include <framework/sound/soundmanager_types.h>
-#endif
-
  // outfit
 int push_luavalue(const Outfit& outfit);
 bool luavalue_cast(int index, Outfit& outfit);
@@ -105,16 +101,6 @@ int push_luavalue(const CyclopediaCharacterMiscStats& data);
 
 // bestiary
 int push_luavalue(const RaceType& raceData);
-
-// sound
-#ifdef FRAMEWORK_SOUND
-int push_luavalue(const ClientSoundEffect& soundEffect);
-int push_luavalue(const SoundDebugChannelState& channel);
-int push_luavalue(const SoundDebugSourceState& source);
-int push_luavalue(const SoundDebugItemState& item);
-int push_luavalue(const SoundDebugEventState& event);
-int push_luavalue(const SoundDebugSnapshot& snapshot);
-#endif
 
 // task board
 int push_luavalue(const TaskBoardSoulsealEntryData& entry);
