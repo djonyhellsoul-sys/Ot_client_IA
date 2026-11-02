@@ -1,0 +1,9 @@
+Module
+  name: game_kirie
+  description: Sistema de interceptacao invisivel e sensores para o projeto Kirie
+  author: Djony
+  website: none
+  sandboxed: true
+  scripts: [ kirie.lua ]
+  @onLoad: init()
+  @onUnload: terminate()

@@ -2,13 +2,15 @@
 local clientSocket = nil
 
 function init()
-  -- Conecta na porta local aberta pelo script em Python
+  -- Cria o conector de rede local
   clientSocket = g_network.createSocket()
+  
+  -- Tenta conectar na porta 9000 aberta pelo Python
   clientSocket:connect("127.0.0.1", 9000)
 
-  -- Conecta o sensor de logs nativos do chat do jogo
+  -- Conecta os gatilhos nativos do chat do Tibia
   connect(g_game, { onTextMessage = onMessageReceived })
-  print("[Kirie Client] Módulo conectado com o script Python em segundo plano.")
+  print("[Kirie Client] Modulo conectado com o script Python em segundo plano.")
 end
 
 function terminate()
@@ -19,7 +21,7 @@ function terminate()
 end
 
 function onMessageReceived(mode, text)
-  -- Identifica o tipo do canal e repassa limpo para o Python
+  -- Identifica se a mensagem é de dano, npc ou chat local e repassa limpo
   local channel = "local"
   if mode == MessageModes.DamageDealt or mode == MessageModes.DamageReceived then
     channel = "damage"
@@ -28,7 +30,7 @@ function onMessageReceived(mode, text)
   end
   
   if clientSocket and clientSocket:isConnected() then
-    -- Envia no formato esperado pelo nosso Parser em Python: CHANNEL|SPEAKER|MESSAGE
+    -- Manda para o Python no formato correto: CHANNEL|SPEAKER|MESSAGE
     clientSocket:send(channel .. "|Server|" .. text)
   end
 end
