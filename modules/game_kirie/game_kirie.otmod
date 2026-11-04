@@ -1,0 +1,13 @@
+Module
+  name: game_kirie
+  description: Painel de Controle Kirie IA
+  author: Djony
+  website: none
+  sandboxed: false
+  loaded: true
+  
+  scripts:
+    - game_kirie
+
+  @onLoad: init()
+  @onUnload: terminate()

@@ -1,21 +1,20 @@
 MainWindow
   id: kirieWindow
-  !text: tr('Kirie IA - Painel de Controle')
-  size: 200 180
-  @onEscape: toggle()
+  !text: tr('Kirie IA - Controle')
+  size: 220 180
 
   Button
     id: buttonStartPause
     !text: tr('Iniciar IA')
-    width: 160
+    width: 140
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
-    margin-top: 10
+    margin-top: 15
 
   Button
     id: buttonSaveClose
     !text: tr('Salvar e Fechar')
-    width: 160
+    width: 140
     anchors.top: buttonStartPause.bottom
     anchors.horizontalCenter: parent.horizontalCenter
     margin-top: 15
@@ -23,7 +22,7 @@ MainWindow
   Button
     id: buttonToggleWindow
     !text: tr('Fechar Painel')
-    width: 160
+    width: 140
     anchors.top: buttonSaveClose.bottom
     anchors.horizontalCenter: parent.horizontalCenter
     margin-top: 15

@@ -1,9 +1,0 @@
-Module
-  name: game_kirie
-  description: Painel de Controle e Sensores da Kirie IA
-  author: Djony
-  website: none
-  sandboxed: false
-  scripts: [ kirie ]
-  @onLoad: init()
-  @onUnload: terminate()
