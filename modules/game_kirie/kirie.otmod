@@ -1,9 +1,9 @@
 Module
   name: game_kirie
-  description: Sistema de interceptacao invisivel e sensores para o projeto Kirie
+  description: Painel de Controle e Sensores da Kirie IA
   author: Djony
   website: none
-  sandboxed: true
-  scripts: [ kirie.lua ]
+  sandboxed: false
+  scripts: [ kirie ]
   @onLoad: init()
   @onUnload: terminate()

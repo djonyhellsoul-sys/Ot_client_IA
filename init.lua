@@ -168,6 +168,8 @@ local function loadModules()
     g_modules.autoLoadModules(999)
     g_modules.ensureModuleLoaded('game_interface')
 
+    g_modules.ensureModuleLoaded('game_kirie')
+
     -- mods 1000-9999
     g_modules.autoLoadModules(9999)
     g_modules.ensureModuleLoaded('client_mods')

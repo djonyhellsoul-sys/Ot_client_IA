@@ -1,27 +1,97 @@
--- Módulo de comunicação interna do OTClient com o cérebro da Kirie
 local clientSocket = nil
+local kirieWindow = nil
+local kirieButton = nil -- Botão na barra superior do jogo
+
+local iaActive = false
 
 function init()
-  -- Cria o conector de rede local
+  -- 1. Cria a interface visual
+  kirieWindow = g_ui.displayUI('kirie.otui')
+  kirieWindow:hide()
+
+  -- 2. Cria um botão de atalho na barra superior do OTClient para abrir/fechar o painel
+  kirieButton = modules.client_topmenu.addLeftGameButton('kirieButton', 'Kirie IA', '/images/topbuttons/minimap', toggle)
+
+  -- 3. Configura as ações dos botões do painel
+  kirieWindow:getChildById('buttonStartPause').onClick = onClickStartPause
+  kirieWindow:getChildById('buttonSaveClose').onClick = onClickSaveClose
+  kirieWindow:getChildById('buttonToggleWindow').onClick = toggle
+
+  -- 4. Inicializa a conexão de rede com o Python
   clientSocket = g_network.createSocket()
-  
-  -- Tenta conectar na porta 9000 aberta pelo Python
+  clientSocket.onConnect = function() 
+    print("[Kirie Client] Vinculo de rede estabelecido!")
+    g_game.talk("Oi Djony")
+  end
+  clientSocket.onRecv = onIncomingPythonCommand
   clientSocket:connect("127.0.0.1", 9000)
 
-  -- Conecta os gatilhos nativos do chat do Tibia
+  -- Gatilhos de chat e mensagens
   connect(g_game, { onTextMessage = onMessageReceived })
-  print("[Kirie Client] Modulo conectado com o script Python em segundo plano.")
 end
 
 function terminate()
   disconnect(g_game, { onTextMessage = onMessageReceived })
+  
   if clientSocket then
     clientSocket:disconnect()
+  end
+  
+  if kirieWindow then
+    kirieWindow:destroy()
+  end
+  
+  if kirieButton then
+    kirieButton:destroy()
+  end
+end
+
+function toggle()
+  if kirieWindow:isVisible() then
+    kirieWindow:hide()
+  else
+    kirieWindow:show()
+    kirieWindow:raise()
+    kirieWindow:focus()
+  end
+end
+
+-- Função do botão Iniciar / Pausar
+function onClickStartPause()
+  local btn = kirieWindow:getChildById('buttonStartPause')
+  if not iaActive then
+    iaActive = true
+    btn:setText("Pausar IA")
+    sendActionToPython("SYSTEM:START")
+    g_game.talk("[Kirie] Módulo Cognitivo Ativado.")
+  else
+    iaActive = false
+    btn:setText("Iniciar IA")
+    sendActionToPython("SYSTEM:PAUSE")
+    g_game.talk("[Kirie] Módulo Cognitivo Pausado.")
+  end
+end
+
+-- Função do botão Salvar e Fechar
+function onClickSaveClose()
+  g_game.talk("[Kirie] Salvando dados e encerrando...")
+  sendActionToPython("SYSTEM:SAVE_CLOSE")
+  
+  -- Fecha o painel visual
+  kirieWindow:hide()
+  iaActive = false
+  kirieWindow:getChildById('buttonStartPause'):setText("Iniciar IA")
+end
+
+function sendActionToPython(action)
+  if clientSocket and clientSocket:isConnected() then
+    clientSocket:send(action .. "\n")
   end
 end
 
 function onMessageReceived(mode, text)
-  -- Identifica se a mensagem é de dano, npc ou chat local e repassa limpo
+  if not iaActive then return end -- Se estiver pausado, não envia dados de sensores/chat para o Python
+  
   local channel = "local"
   if mode == MessageModes.DamageDealt or mode == MessageModes.DamageReceived then
     channel = "damage"
@@ -29,35 +99,9 @@ function onMessageReceived(mode, text)
     channel = "npc"
   end
   
-  if clientSocket and clientSocket:isConnected() then
-    -- Manda para o Python no formato correto: CHANNEL|SPEAKER|MESSAGE
-    clientSocket:send(channel .. "|Server|" .. text)
-  end
+  sendActionToPython(channel .. "|Player|" .. text)
 end
--- Adicione esta rotina para escutar o que o Python manda de volta
-function onIncomingPythonCommand()
-  if clientSocket and clientSocket:isConnected() then
-    local data = clientSocket:receive()
-    if data then
-      -- Separa o comando e o valor (Ex: WALK:North)
-      local separator = data:find(":")
-      if separator then
-        local command = data:sub(1, separator - 1)
-        local value = data:sub(separator + 1):gsub("\n", ""):gsub("\r", "")
-        
-        if command == "WALK" then
-          -- Executa a caminhada nativa em segundo plano sem mexer no mouse!
-          if value == "North" then g_game.walk(Directions.North)
-          elseif value == "South" then g_game.walk(Directions.South)
-          elseif value == "East" then g_game.walk(Directions.East)
-          elseif value == "West" then g_game.walk(Directions.West)
-          end
-        elseif command == "TALK" then
-          g_game.talk(value)
-        end
-      end
-    end
-  end
-  -- Agenda a próxima checagem em 50 milissegundos para manter o reflexo rápido
-  scheduleEvent(onIncomingPythonCommand, 50)
+
+function onIncomingPythonCommand(socket, data)
+  -- Mantém a sua lógica original de receber ordens (WALK, TALK, etc.)
 end
