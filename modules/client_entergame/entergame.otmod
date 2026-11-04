@@ -8,6 +8,8 @@ Module
     - client_assets
     - game_features
     - game_things
+    - game_kirie
+
 
   @onLoad: |
     dofile 'entergame'

@@ -59,5 +59,8 @@ Module
     - game_wheel
     - game_proficiency
 
+  dependencies:
+    - client_topmenu
+
   @onLoad: init()
   @onUnload: terminate()

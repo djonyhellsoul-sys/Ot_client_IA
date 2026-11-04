@@ -4,10 +4,12 @@ Module
   author: Djony
   website: none
   sandboxed: false
-  loaded: true
   
   scripts:
     - game_kirie
+
+  dependencies:
+    - game_interface
 
   @onLoad: init()
   @onUnload: terminate()
